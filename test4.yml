@@ -1,0 +1,48 @@
+---
+# My Ansible playbook.
+- hosts: '{{ variable_host | default(empty_host) }}'
+  vars:
+       alias_name: '{{ alias }}' 
+       upload_file: '{{ upload }}'
+       pack1: /home/ansible
+       
+  tasks:
+
+   - name: Copy file with owner and permissions
+     copy:
+      src: '{{ upload_file }}'
+      dest: '{{ pack1 }}'
+      owner: ansible
+      group: ansible
+      mode: '0777'
+   
+   - name: return recentfile to registered var
+     shell: "ls -Art | tail -n 1"
+     args:
+      chdir: '{{ pack1 }}'
+     register: recentfile
+   - debug:
+       msg: "{{ recentfile.stdout }}"
+   
+   - name: Fetch Java version
+     shell: java -version 2>&1 | grep version | awk '{print $3}' | sed 's/"//g'
+     changed_when: False
+     register: java_result
+
+   - debug:
+       msg: "{{ java_result.stdout }}"      
+   
+   - name: Import SSL certificate from google.com to a given cacerts keystore
+     java_cert:
+      cert_path: '{{ pack1 }}/{{ recentfile.stdout }}'
+      cert_alias: '{{ alias_name }}'
+      keystore_path: '/usr/java/jdk{{ java_result.stdout }}/jre/lib/security'
+      keystore_pass: changeit
+      state: present 
+      
+      
+      
+      
+      
+      
+      
